@@ -1,0 +1,5 @@
+#!/bin/bash
+cd mpi_kmeans-1.5
+make python
+cp py_kmeans.so ..
+cd ..
