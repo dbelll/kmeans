@@ -1,0 +1,114 @@
+#   CS 292, Fall 2009
+#   Final Project
+#   Dwight Bell
+#--------------------
+
+The main code for the PyCuda k-means algorithm using triangle inequality
+is in the following files:
+
+	cuda_kmeans_tri.py	python code for the algorithm
+	mods4.py		code to generate source modules
+	meta_utils.py		code-generating helper functions
+	cpu_kmeans.py		cpu version of k-means used for reference
+	verify.py		verify results of various kmeans calculations
+
+
+The function to run the algorithm is:
+	trikmeans_gpu(data, clusters, iterations)
+and it returns:
+	(new_clusters, labels)
+
+Input arguments are the data, initial clusters, and number of
+iterations to repeat.
+
+The shape of data is (nDim, nPts) where 
+	nDim = number of dimensions in the data, and
+        nPts = number of data points.
+
+The shape of clusters is (nDim, nClusters) 
+    
+The return values are the updated clusters and labels for the data.
+
+Here is a sample run:
+
+    >>> import cuda_kmeans_tri as kmt
+    >>> import numpy as np
+    >>> data = np.random.rand(2,5)
+    >>> data
+    array([[ 0.89399496,  0.51213574,  0.66063651,  0.76437086,  0.96740785],
+           [ 0.11343231,  0.27004973,  0.40700805,  0.955545  ,  0.19054395]])
+    >>> clusters = np.random.rand(2,3)
+    >>> clusters
+    array([[ 0.58353937,  0.04198189,  0.40181198],
+           [ 0.02162198,  0.86451144,  0.32205501]])
+    >>> (new_clusters, labels) = kmt.trikmeans_gpu(data, clusters, 1)
+    >>> labels
+    array([0, 2, 2, 1, 0])
+    >>> new_clusters
+    array([[ 0.93070138,  0.76437086,  0.58638608],
+           [ 0.15198813,  0.95554501,  0.33852887]], dtype=float32)
+
+-----------------------------------------------------------------------------
+
+To compare results with the cpu version of the algorithm, you must first compile the python module which runs it.  Use this command to compile it
+on resonance (the makefile will have to be modified for other platforms):
+
+	./make_py_kmeans
+
+
+To verify kmeans algorithms and compare the results:
+
+	python verify.py
+
+
+A number of problem sizes will be run using various methods:
+
+	scipy  = scipy cluster algorithm run on CPU, if available
+	mpi    = triangle k-means on CPU
+	cpu    = standard k-means on CPU, for reference
+	tri    = PyCuda triangle inequality on GPU
+
+The results are compared and any disagreements printed.
+
+-----------------------------------------------------------------------------
+
+Timing Runs
+
+To run a variety of problem sizes and time the PyCuda version use:
+
+	python run_timings.py
+
+To time the CPU version of triangle inequality algorithm run:
+
+	python run_mpi2.py
+
+
+The initial run of a PyCuda routine will take longer than subsequent runs
+due to the need to compile the source modules on the GPU.  To 'prime' the
+GPU and get the ultimate time value for the PyCuda code, use:
+
+	python run_primer.py
+
+-------------------------------------------------------------------------------
+
+Further Testing
+
+There are additional testing routines in cuda_kmeans_tri.py:
+
+	run_all(printFlag) - runs a number of problems and compares results to
+				CPU reference.  This test can by run using
+				"python run_all.py"
+	
+	run_tests(nTests, nPts, nDim, nClusters, nReps=1, verbose=VERBOSE,
+			print_times=PRINT_TIME, verify = 1)
+
+			- runs a random problem with nPts points, nDim dimensions,
+			nClusters clusters, and nReps repititions.  The test is
+			repeated nTests times.  The verbose flag turns on extra
+			detail printing, print_times flag causes timing values
+			to print, and the verify flag will compare results to
+			CPU reference calculation.
+
+There is a CPU_SIZE_LIMIT value in cuda_kmeans_tri.py which will prevent very large problems from being tried on the CPU.  This can be used to prevent out-
+of-memory errors, or to limit the testing to smaller problems.  CPU calculations
+for large problem sizes can be slow.
